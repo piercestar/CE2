@@ -1,8 +1,12 @@
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Scanner;
 
 public class TextBuddy {
 	
+	private static final String MESSAGE_NOTHING_TO_SORT = "Nothing to sort";
+	private static final String COMMAND_SORT = "sort";
 	// User commands
 	private static final String COMMAND_EXIT = "exit";
 	private static final String COMMAND_DELETE = "delete";
@@ -32,11 +36,11 @@ public class TextBuddy {
 	private static String fileName;
 
 	enum COMMAND_TYPE {
-		ADD, DISPLAY, DELETE, CLEAR, EXIT, INVALID;
-	}
+		ADD, DISPLAY, DELETE, CLEAR, EXIT, INVALID, SORT
+	};
 
 	public static void main(String[] args){
-		fileName = args[0];
+		createFile(args);
 		showToUser(String.format(WELCOME_MESSAGE,fileName));
 		while (true) {
 			System.out.print("Enter command:");
@@ -44,6 +48,16 @@ public class TextBuddy {
 			String userCommand = command;
 			String feedback = executeCommand(userCommand);
 			showToUser(feedback);
+		}
+	}
+
+	public static void createFile(String[] args) {
+		fileName = args[0];
+		File file = new File(fileName);
+		try {
+			fileChecker(file);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -66,6 +80,8 @@ public class TextBuddy {
 			return clear();
 		case DELETE:
 			return delete(removeFirstWord(userCommand));
+		case SORT:
+			return sort();
 		case INVALID:
 			return String.format(MESSAGE_INVALID_FORMAT, userCommand);
 		case EXIT:
@@ -82,17 +98,19 @@ public class TextBuddy {
 	 * @return						Returns the corresponding Command Type. 
 	 */
 	private static COMMAND_TYPE determineCommandType(String commandTypeString) {
-		if (commandTypeString == null)
+		if (commandTypeString == null) {
 			throw new Error("command type string cannot be null!");
-
+		}
 		if (commandTypeString.equalsIgnoreCase(COMMAND_ADD)) {
 			return COMMAND_TYPE.ADD;
 		} else if (commandTypeString.equalsIgnoreCase(COMMAND_DISPLAY)) {
 			return COMMAND_TYPE.DISPLAY;
-		} else if(commandTypeString.equalsIgnoreCase(COMMAND_CLEAR)){
+		} else if(commandTypeString.equalsIgnoreCase(COMMAND_CLEAR)) {
 			return COMMAND_TYPE.CLEAR;
-		} else if(commandTypeString.equalsIgnoreCase(COMMAND_DELETE)){
+		} else if(commandTypeString.equalsIgnoreCase(COMMAND_DELETE)) {
 			return COMMAND_TYPE.DELETE;
+		} else if (commandTypeString.equalsIgnoreCase(COMMAND_SORT)) {
+			return COMMAND_TYPE.SORT;
 		} else if (commandTypeString.equalsIgnoreCase(COMMAND_EXIT)) {
 			return COMMAND_TYPE.EXIT;
 		} else {
@@ -108,12 +126,10 @@ public class TextBuddy {
 	private static String add(String userCommand) {
 		try {
 			File file = new File(fileName);
-			if(!file.exists()){
-				file.createNewFile();
-			}
+			fileChecker(file);
 			FileWriter fw = new FileWriter(file.getAbsoluteFile(),BOOLEAN_APPEND);
 			BufferedWriter bw = new BufferedWriter(fw);
-			bw.write(userCommand);
+			bw.write(userCommand.toLowerCase());
 			// newLine character as delimiter.
 			bw.write('\n'); 
 			bw.close();
@@ -122,6 +138,12 @@ public class TextBuddy {
 			e.printStackTrace();
 		}
 		return MESSAGE_FAILED_TO_ADD;
+	}
+
+	private static void fileChecker(File file) throws IOException {
+		if(!file.exists()){
+			file.createNewFile();
+		}
 	}
 
 	/**
@@ -160,9 +182,7 @@ public class TextBuddy {
 	private static String clear() {
 		try {
 			File file = new File(fileName);
-			if(!file.exists()){
-				file.createNewFile();
-			}
+			fileChecker(file);
 			FileWriter fw = new FileWriter(file.getAbsoluteFile(),BOOLEAN_OVERWRITE);
 			BufferedWriter bw = new BufferedWriter(fw);
 			bw.close();
@@ -223,6 +243,67 @@ public class TextBuddy {
 			e.printStackTrace();
 		}
 		return MESSAGE_FAILED_TO_DELETE;
+	}
+	
+
+	private static String sort() {
+		
+		try {
+		File readerFile = new File(fileName);
+		File writerFile = new File("temp" + fileName);
+		
+		BufferedReader reader = new BufferedReader(new FileReader(readerFile));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(writerFile));
+		
+		ArrayList<String> lineStore = new ArrayList<String>();
+		int index = 0;
+		
+		index = readAndStoreEntireFile(reader, lineStore, index);
+		
+		// Check if file is empty
+		if (index == 0) {
+			writer.close();
+			writerFile.delete();
+			reader.close();
+			return MESSAGE_NOTHING_TO_SORT;
+		}
+		
+		rewriteSortedFile(writer, lineStore, index);
+		
+		// Delete old file and "OverWrite" with new updated file.
+		readerFile.delete();
+		writerFile.renameTo(readerFile);
+		
+		writer.close(); 
+		reader.close(); 
+				
+		return	String.format("%1$s sorted", fileName);
+		
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return	String.format(" %1$s sorted", fileName);
+	}
+
+	private static void rewriteSortedFile(BufferedWriter writer,
+			ArrayList<String> lineStore, int index) throws IOException {
+		Collections.sort(lineStore);
+		for (int i = 0; i < index; i++) {
+			writer.write(lineStore.get(i));
+			writer.write('\n');
+		}
+	}
+
+	public static int readAndStoreEntireFile(BufferedReader reader,
+			ArrayList<String> lineStore, int index) throws IOException {
+		String currentLine;
+		while ((currentLine = reader.readLine()) != null) {
+			lineStore.add(currentLine);
+			index++;
+		}
+		return index;
 	}
 	
 	/**
