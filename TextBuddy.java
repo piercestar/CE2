@@ -9,6 +9,7 @@ public class TextBuddy {
 	private static final String COMMAND_CLEAR = "clear";
 	private static final String COMMAND_DISPLAY = "display";
 	private static final String COMMAND_ADD = "add";
+	
 	// Successful User Feedback messages
 	private static final String MESSAGE_ADD_SUCCESSFUL = "added to %1$s: \"%2$s\"";
 	private static final String MESSAGE_DELETE_SUCCESSFUL = "deleted from %1$s: \"%2$s\"";
@@ -51,7 +52,7 @@ public class TextBuddy {
 	 * @param userCommand
 	 * @return 		Message Feedback of the function indicating whether it was successful or not.
 	 */
-	private static String executeCommand(String userCommand) {
+	public static String executeCommand(String userCommand) {
 		if(checkIfEmptyString(userCommand))
 			return String.format(MESSAGE_INVALID_FORMAT,userCommand);
 
