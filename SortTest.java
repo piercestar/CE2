@@ -116,14 +116,6 @@ public class SortTest {
 		fileCompare(args, expectedOutput);
 	}
 	
-	@Test
-	public void testSearch1() {
-		String[] args = new String[1];
-		args[0] = "TextBuddys.txt";
-		TextBuddy.createFile(args);
-		
-		TextBuddy.search("duck");
-	}
 	
 	@Test
 	public void testSearch() {
@@ -132,6 +124,15 @@ public class SortTest {
 		TextBuddy.createFile(args);
 				
 		assertEquals("",TextBuddy.executeCommand("search duck"));
+	}
+	
+	@Test
+	public void testSearchEmpty() {
+		String[] args = new String[1];
+		args[0] = "TextBuddys.txt";
+		TextBuddy.createFile(args);
+				
+		assertEquals("Error: failed to search",TextBuddy.executeCommand("search"));
 	}
 
 
