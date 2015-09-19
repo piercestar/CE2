@@ -30,14 +30,13 @@ public class TextBuddy {
 	
 	private static Scanner scanner = new Scanner(System.in);
 
-	private static final boolean BOOLEAN_OVERWRITE = false;
 	private static final boolean BOOLEAN_APPEND = true;
 	
 	private static String fileName;
 
 	enum COMMAND_TYPE {
 		ADD, DISPLAY, DELETE, CLEAR, EXIT, INVALID, SORT
-	};
+	}
 
 	public static void main(String[] args){
 		createFile(args);
@@ -129,7 +128,7 @@ public class TextBuddy {
 			fileChecker(file);
 			FileWriter fw = new FileWriter(file.getAbsoluteFile(),BOOLEAN_APPEND);
 			BufferedWriter bw = new BufferedWriter(fw);
-			bw.write(userCommand.toLowerCase());
+			bw.write(userCommand);
 			// newLine character as delimiter.
 			bw.write('\n'); 
 			bw.close();
@@ -182,10 +181,9 @@ public class TextBuddy {
 	private static String clear() {
 		try {
 			File file = new File(fileName);
+			file.delete();
 			fileChecker(file);
-			FileWriter fw = new FileWriter(file.getAbsoluteFile(),BOOLEAN_OVERWRITE);
-			BufferedWriter bw = new BufferedWriter(fw);
-			bw.close();
+
 			return String.format(MESSAGE_CLEARED, fileName);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -289,7 +287,7 @@ public class TextBuddy {
 
 	private static void rewriteSortedFile(BufferedWriter writer,
 			ArrayList<String> lineStore, int index) throws IOException {
-		Collections.sort(lineStore);
+		Collections.sort(lineStore, String.CASE_INSENSITIVE_ORDER);
 		for (int i = 0; i < index; i++) {
 			writer.write(lineStore.get(i));
 			writer.write('\n');
@@ -314,7 +312,7 @@ public class TextBuddy {
 	 */
 	private static boolean isInteger(String str)  {  
 	  try {  
-	    Integer digit = Integer.parseInt(str);  
+	    Integer.parseInt(str);  
 	  } catch(NumberFormatException nfe) {  
 	    return false;  
 	  }
