@@ -14,20 +14,6 @@ import org.junit.Test;
 
 
 public class SortTest {
-	private final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-	private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
-
-	@Before
-	public void setUpStreams() {
-	    System.setOut(new PrintStream(outContent));
-	    System.setErr(new PrintStream(errContent));
-	}
-
-	@After
-	public void cleanUpStreams() {
-	    System.setOut(null);
-	    System.setErr(null);
-	}
 
 	@Test
 	public void testAdd() {
@@ -131,24 +117,21 @@ public class SortTest {
 	}
 	
 	@Test
-	public void testSearch() {
+	public void testSearch1() {
 		String[] args = new String[1];
 		args[0] = "TextBuddys.txt";
 		TextBuddy.createFile(args);
 		
-		ArrayList<String> expectedOutput = new ArrayList<String>();
-		expectedOutput.clear();
-		expectedOutput.add("duck1");
-		expectedOutput.add("duck1");
-		expectedOutput.add("duck2");
-		expectedOutput.add("GOKUduck1");
-		expectedOutput.add("gokuduck2");
-		expectedOutput.add("GOKUduck2");
-		expectedOutput.add("vegeduck3");
-		
-		TextBuddy.executeCommand("search duck");
-		
-		assertEquals(expectedOutput,outContent.toString());
+		TextBuddy.search("duck");
+	}
+	
+	@Test
+	public void testSearch() {
+		String[] args = new String[1];
+		args[0] = "TextBuddys.txt";
+		TextBuddy.createFile(args);
+				
+		assertEquals("",TextBuddy.executeCommand("search duck"));
 	}
 
 
@@ -160,10 +143,8 @@ public class SortTest {
 			TextBuddy.readAndStoreEntireFile(br,actualOutput,0);
 			assertEquals(expectedOutput,actualOutput);
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

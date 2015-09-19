@@ -5,23 +5,25 @@ import java.util.Scanner;
 
 public class TextBuddy {
 	
-	private static final String MESSAGE_NOTHING_TO_SORT = "Nothing to sort";
-	private static final String COMMAND_SORT = "sort";
 	// User commands
 	private static final String COMMAND_EXIT = "exit";
 	private static final String COMMAND_DELETE = "delete";
 	private static final String COMMAND_CLEAR = "clear";
 	private static final String COMMAND_DISPLAY = "display";
 	private static final String COMMAND_ADD = "add";
+	private static final String COMMAND_SEARCH = "search";
+	private static final String COMMAND_SORT = "sort";
 	
 	// Successful User Feedback messages
 	private static final String MESSAGE_ADD_SUCCESSFUL = "added to %1$s: \"%2$s\"";
 	private static final String MESSAGE_DELETE_SUCCESSFUL = "deleted from %1$s: \"%2$s\"";
 	private static final String MESSAGE_CLEARED = "all content deleted from %1$s";
+	private static final String MESSAGE_NOTHING_TO_SORT = "Nothing to sort";
 	
 	private static final String WELCOME_MESSAGE = "Welcome to TextBuddy.%1$s is ready for use";
 	
 	// Error Messages
+	private static final String MESSAGE_FAILED_TO_SEARCH = "Error: Failed to search";
 	private static final String MESSAGE_FAILED_TO_ADD = "Error: Failed to add";
 	private static final String MESSAGE_FAILED_TO_DISPLAY = "Error: Failed to display";
 	private static final String MESSAGE_FAILED_TO_CLEAR = "Error: Failed to clear";
@@ -35,7 +37,7 @@ public class TextBuddy {
 	private static String fileName;
 
 	enum COMMAND_TYPE {
-		ADD, DISPLAY, DELETE, CLEAR, EXIT, INVALID, SORT
+		ADD, DISPLAY, DELETE, CLEAR, EXIT, INVALID, SORT, SEARCH
 	}
 
 	public static void main(String[] args){
@@ -49,7 +51,10 @@ public class TextBuddy {
 			showToUser(feedback);
 		}
 	}
-
+	
+	/*
+	 * Initializes the file and Creates one if an existing one is not found. 
+	 */
 	public static void createFile(String[] args) {
 		fileName = args[0];
 		File file = new File(fileName);
@@ -81,6 +86,8 @@ public class TextBuddy {
 			return delete(removeFirstWord(userCommand));
 		case SORT:
 			return sort();
+		case SEARCH:
+			return search(removeFirstWord(userCommand));
 		case INVALID:
 			return String.format(MESSAGE_INVALID_FORMAT, userCommand);
 		case EXIT:
@@ -110,6 +117,8 @@ public class TextBuddy {
 			return COMMAND_TYPE.DELETE;
 		} else if (commandTypeString.equalsIgnoreCase(COMMAND_SORT)) {
 			return COMMAND_TYPE.SORT;
+		} else if (commandTypeString.equalsIgnoreCase(COMMAND_SEARCH)) {
+			return COMMAND_TYPE.SEARCH;
 		} else if (commandTypeString.equalsIgnoreCase(COMMAND_EXIT)) {
 			return COMMAND_TYPE.EXIT;
 		} else {
@@ -126,12 +135,12 @@ public class TextBuddy {
 		try {
 			File file = new File(fileName);
 			fileChecker(file);
-			FileWriter fw = new FileWriter(file.getAbsoluteFile(),BOOLEAN_APPEND);
-			BufferedWriter bw = new BufferedWriter(fw);
-			bw.write(userCommand);
+			FileWriter fileWriter = new FileWriter(file.getAbsoluteFile(),BOOLEAN_APPEND);
+			BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+			bufferedWriter.write(userCommand);
 			// newLine character as delimiter.
-			bw.write('\n'); 
-			bw.close();
+			bufferedWriter.write('\n'); 
+			bufferedWriter.close();
 			return String.format(MESSAGE_ADD_SUCCESSFUL,fileName,userCommand);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -152,12 +161,12 @@ public class TextBuddy {
 	 * 				Returns an empty string if successful.
 	 */
 	private static String display() {
-		BufferedReader br = null;
+		BufferedReader bufferedWriter = null;
 		try {
 			String currentLine;
-			br = new BufferedReader(new FileReader(fileName));
+			bufferedWriter = new BufferedReader(new FileReader(fileName));
 			int index = 1;
-			while ((currentLine = br.readLine()) != null) {
+			while ((currentLine = bufferedWriter.readLine()) != null) {
 				System.out.println(index + ". " + currentLine);
 				index++;
 			}
@@ -166,7 +175,7 @@ public class TextBuddy {
 			e.printStackTrace();
 		} finally {
 			try {
-				if (br != null) br.close();
+				if (bufferedWriter != null) bufferedWriter.close();
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			}
@@ -211,6 +220,7 @@ public class TextBuddy {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(writerFile));
 
 			String currentLine;
+			String deletedLine = "";
 			boolean isDeleted = false;
 			int index = 1;
 
@@ -219,6 +229,7 @@ public class TextBuddy {
 				// If Index to be deleted is found, Mark as deleted, skip line and continue.
 				if(index == Integer.parseInt(userCommand)){ 
 					isDeleted = true;
+					deletedLine = currentLine;
 				} else {
 					writer.write(currentLine);
 					writer.write('\n');
@@ -233,7 +244,7 @@ public class TextBuddy {
 			
 			// Return feedback output based on whether deletion was successful.
 			if(isDeleted) {
-				return String.format(MESSAGE_DELETE_SUCCESSFUL, fileName, userCommand);
+				return String.format(MESSAGE_DELETE_SUCCESSFUL, fileName, deletedLine);
 			} else {
 				return MESSAGE_FAILED_TO_DELETE;
 				}
@@ -243,7 +254,10 @@ public class TextBuddy {
 		return MESSAGE_FAILED_TO_DELETE;
 	}
 	
-
+	/*
+	 * Sorts the file lexicographically
+	 * @return		Feedback message based on whether the sort was successful or not.  
+	 */
 	private static String sort() {
 		
 		try {
@@ -282,9 +296,52 @@ public class TextBuddy {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return	String.format(" %1$s sorted", fileName);
+		return	String.format("%1$s sorted", fileName);
 	}
-
+	
+	/*
+	 * Searches the entire file and outputs all lines containing the keyword.
+	 * @param keyword	The user input string to be used to searched in the file.
+	 * @return 			Returns a not found output message when keyword can't be found in the file.
+	 * 					Returns an empty string if the keyword was found in a line.
+	 */
+	public static String search(String keyword) {
+		
+			try {
+				File reader = new File(fileName);
+				BufferedReader br = new BufferedReader(new FileReader(reader));				
+				ArrayList<String> lineStore = new ArrayList<String>();
+				int index = 0;
+				boolean isFound = false;
+				
+				index  = readAndStoreEntireFile(br, lineStore, index);
+				
+				// Print out all lines with the keywords
+				for (int i = 0; i < index; i++) {
+					if (lineStore.get(i).contains(keyword)) {
+						System.out.println(lineStore.get(i));
+						isFound = true;
+					}
+				}
+				
+				if (isFound == true) {
+					return "";
+				} else {
+					return String.format("%1$s not found",keyword);
+				}
+				
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		
+		return MESSAGE_FAILED_TO_SEARCH;
+	}
+	
+	/*
+	 *  Sorts a file and rewrites it in sorted order.
+	 */
 	private static void rewriteSortedFile(BufferedWriter writer,
 			ArrayList<String> lineStore, int index) throws IOException {
 		Collections.sort(lineStore, String.CASE_INSENSITIVE_ORDER);
@@ -294,6 +351,9 @@ public class TextBuddy {
 		}
 	}
 
+	/*
+	 * Reads a file and stores the lines in an Arraylist and returns the number of lines in the file.
+	 */
 	public static int readAndStoreEntireFile(BufferedReader reader,
 			ArrayList<String> lineStore, int index) throws IOException {
 		String currentLine;
